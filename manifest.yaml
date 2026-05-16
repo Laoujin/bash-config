@@ -1,0 +1,14 @@
+gallery: bash
+links:
+  - source: .bashrc
+    target:
+      linux: "$HOME/.bashrc"
+      macos: "$HOME/.bashrc"
+  - source: .bashrc.d
+    target:
+      linux: "$HOME/.bashrc.d"
+      macos: "$HOME/.bashrc.d"
+  - source: starship.toml
+    target:
+      linux: "$HOME/.config/starship.toml"
+      macos: "$HOME/.config/starship.toml"

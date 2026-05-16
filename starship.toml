@@ -1,0 +1,53 @@
+# Lean starship prompt. ASCII-only — no nerd font required (works on NAS SSH).
+
+add_newline = true
+
+format = """
+$username\
+$hostname\
+$directory\
+$git_branch\
+$git_status\
+$cmd_duration\
+$line_break\
+$character"""
+
+[character]
+success_symbol = "[\\$](bold green)"
+error_symbol = "[\\$](bold red)"
+
+[directory]
+truncation_length = 4
+truncate_to_repo = true
+style = "bold blue"
+
+[git_branch]
+symbol = ""
+format = "on [$branch]($style) "
+style = "bold purple"
+
+[git_status]
+format = "([$all_status$ahead_behind]($style) )"
+style = "yellow"
+conflicted = "="
+ahead = ">"
+behind = "<"
+diverged = "<>"
+untracked = "?"
+stashed = "$"
+modified = "!"
+staged = "+"
+renamed = "»"
+deleted = "x"
+
+[cmd_duration]
+min_time = 2_000
+format = "took [$duration](yellow) "
+
+[hostname]
+ssh_only = true
+format = "[$hostname](bold red) "
+
+[username]
+show_always = false
+format = "[$user]($style)@"

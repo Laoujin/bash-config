@@ -1,0 +1,56 @@
+Bash Config
+===========
+
+Vanilla bash + [starship][starship] prompt.
+This is a part of [Perch][perch] dotfiles.
+
+Layout
+------
+
+| File                          | Purpose                                                                |
+|-------------------------------|------------------------------------------------------------------------|
+| `.bashrc`                     | Entry point. Sources `.bashrc.d/*.sh` in lexical order.                |
+| `.bashrc.d/00-history.sh`     | History sizing and dedup.                                              |
+| `.bashrc.d/10-aliases.sh`     | `ll`, `la`, `..`, `..2` … `..5`.                                       |
+| `.bashrc.d/20-colors.sh`      | `dircolors`, colored `ls`/`grep`, `lesspipe`.                          |
+| `.bashrc.d/30-completion.sh`  | `bash-completion` if available.                                        |
+| `.bashrc.d/40-starship.sh`    | `eval $(starship init bash)`, skipped if starship isn't installed.     |
+| `.bashrc.d/50-host-wsl.sh`    | WSL-only: `bun`, `nvm`, `BROWSER=wslview`. Self-detects via `/proc/version`. |
+| `.bashrc.d/50-host-synology.sh` | Synology-only: Entware `/opt/bin` on PATH. Self-detects via `/etc/synoinfo.conf`. |
+| `.bashrc.d/99-local.sh`       | Optional, gitignored. Per-host secrets/overrides.                      |
+| `starship.toml`               | Lean ASCII-only prompt config. No nerd font required.                  |
+
+[starship]: https://starship.rs
+[perch]: https://github.com/Laoujin/perch-the-building
+
+Install starship
+----------------
+
+**WSL / generic Linux:**
+
+```bash
+curl -sS https://starship.rs/install.sh | sh
+```
+
+**Synology DSM:** install via [Entware][entware] or drop a binary manually.
+
+```bash
+# Option 1 — Entware:
+opkg install starship
+
+# Option 2 — manual (persists across DSM updates):
+uname -m   # e.g. x86_64, aarch64
+# Download the matching starship-<arch>-unknown-linux-musl.tar.gz from
+# https://github.com/starship/starship/releases, then:
+sudo tar -C /usr/local/bin -xzf starship-*-linux-musl.tar.gz
+```
+
+[entware]: https://github.com/Entware/Entware
+
+Synology gotchas
+----------------
+
+- Confirm bash is the user's login shell — `getent passwd $USER` shows it in the last field. If not, fix in `/etc/passwd` (Synology blocks `chsh` for most accounts).
+- **Don't edit `/etc/profile`** — DSM rewrites it on updates. Keep everything under `$HOME`.
+- Manually-dropped binaries go in `/usr/local/bin/` (persistent). `/usr/bin/` is wiped on DSM updates.
+- Uninstall oh-my-bash first: `uninstall_oh_my_bash` (or `rm -rf ~/.oh-my-bash` and clear its lines from any pre-existing `~/.bashrc`). Then run `perch deploy`.

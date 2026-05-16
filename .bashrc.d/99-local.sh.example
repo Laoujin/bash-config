@@ -1,0 +1,6 @@
+# Copy to 99-local.sh for per-host overrides that should NOT be committed.
+# 99-local.sh is gitignored.
+#
+# Example:
+#   export OPENAI_API_KEY=...
+#   alias work='cd ~/projects/acme'
