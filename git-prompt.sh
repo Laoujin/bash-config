@@ -39,10 +39,10 @@ while IFS= read -r line; do
         ahead=0 behind=0
         case "$line" in *"ahead "*) t=${line##*ahead }; ahead=${t%%[!0-9]*};; esac
         case "$line" in *"behind "*) t=${line##*behind }; behind=${t%%[!0-9]*};; esac
-        if   [ "$ahead" -gt 0 ] && [ "$behind" -gt 0 ]; then upstream="↑${ahead}↓${behind} "
-        elif [ "$ahead" -gt 0 ];                        then upstream="↑${ahead} "
-        elif [ "$behind" -gt 0 ];                       then upstream="↓${behind} "
-        else                                                 upstream="≡ "
+        if   [ "$ahead" -gt 0 ] && [ "$behind" -gt 0 ]; then upstream="↑${ahead}↓${behind}"
+        elif [ "$ahead" -gt 0 ];                        then upstream="↑${ahead}"
+        elif [ "$behind" -gt 0 ];                       then upstream="↓${behind}"
+        else                                                 upstream="≡"
         fi
         ;;
     esac
@@ -59,9 +59,14 @@ while IFS= read -r line; do
   case "$y" in M) wm=$((wm + 1));; D) wd=$((wd + 1));; esac
 done <<< "$status"
 
-out="[${BRANCH}${branch}${RESET} ${upstream}"
-[ $((ia + im + id)) -gt 0 ] && out="$out${GREEN}+${ia} ~${im} -${id}${RESET} | "
-out="$out${YELLOW}+${wa} ~${wm} -${wd}${RESET}"
-[ "$conflicts" -gt 0 ] && out="$out ${RED}!${conflicts}${RESET}"
+out="${BRANCH}${branch}${RESET}"
+[ -n "$upstream" ] && out="$out $upstream"
 
-printf '%s]' "$out"
+# A fully clean tree shows no counts at all: "[main ≡]", like posh-git.
+if [ $((ia + im + id + wa + wm + wd + conflicts)) -gt 0 ]; then
+  [ $((ia + im + id)) -gt 0 ] && out="$out ${GREEN}+${ia} ~${im} -${id}${RESET} |"
+  out="$out ${YELLOW}+${wa} ~${wm} -${wd}${RESET}"
+  [ "$conflicts" -gt 0 ] && out="$out ${RED}!${conflicts}${RESET}"
+fi
+
+printf '[%s]' "$out"

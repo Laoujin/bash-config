@@ -201,7 +201,7 @@ if command -v git >/dev/null; then
   assert_eq "not a repo" "" "$(poshprompt /tmp)"
 
   w=$(newrepo)
-  assert_eq "clean and in sync"  "[main ≡ +0 ~0 -0]" "$(poshprompt "$w")"
+  assert_eq "clean and in sync"  "[main ≡]" "$(poshprompt "$w")"
 
   echo x >> "$w/f.txt"; echo x >> "$w/g.txt"
   assert_eq "two modified"       "[main ≡ +0 ~2 -0]" "$(poshprompt "$w")"
@@ -217,15 +217,15 @@ if command -v git >/dev/null; then
   assert_eq "staged splits sections" "[main ≡ +1 ~0 -0 | +0 ~0 -0]" "$(poshprompt "$w")"
 
   ( cd "$w" && git commit -qm local ) >/dev/null 2>&1
-  assert_eq "ahead" "[main ↑1 +0 ~0 -0]" "$(poshprompt "$w")"
+  assert_eq "ahead" "[main ↑1]" "$(poshprompt "$w")"
 
   ( cd "$w" && git branch -q --unset-upstream ) >/dev/null 2>&1
-  assert_eq "no upstream" "[main +0 ~0 -0]" "$(poshprompt "$w")"
+  assert_eq "no upstream" "[main]" "$(poshprompt "$w")"
 
   # Detached HEAD has no branch name in the porcelain header.
   ( cd "$w" && git checkout -q --detach HEAD ) >/dev/null 2>&1
   sha=$( cd "$w" && git rev-parse --short HEAD )
-  assert_eq "detached HEAD" "[($sha) +0 ~0 -0]" "$(poshprompt "$w")"
+  assert_eq "detached HEAD" "[($sha)]" "$(poshprompt "$w")"
 
   rm -rf "$(dirname "$w")"
 
