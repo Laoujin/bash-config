@@ -1,0 +1,18 @@
+# Read by every readline program, not just bash.
+$include /etc/inputrc
+
+set completion-ignore-case on
+set completion-map-case on
+set colored-stats on
+
+# Complete as far as the prefix allows, list the rest on the first TAB.
+set show-all-if-ambiguous on
+set show-all-if-unmodified on
+set completion-query-items 200
+
+# PSReadLine-style prefix history. \eO variants are the same keys in
+# application-cursor mode, which most terminals switch to.
+"\e[A": history-search-backward
+"\e[B": history-search-forward
+"\eOA": history-search-backward
+"\eOB": history-search-forward

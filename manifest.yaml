@@ -4,6 +4,10 @@ links:
     target:
       linux: "$HOME/.bashrc"
       macos: "$HOME/.bashrc"
+  - source: .inputrc
+    target:
+      linux: "$HOME/.inputrc"
+      macos: "$HOME/.inputrc"
   - source: .bashrc.d
     target:
       linux: "$HOME/.bashrc.d"

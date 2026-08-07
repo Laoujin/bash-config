@@ -49,6 +49,7 @@ assert_eq "links .bashrc"       "$REPO/.bashrc"       "$(readlink -f "$h/.bashrc
 assert_eq "links .bashrc.d"     "$REPO/.bashrc.d"     "$(readlink -f "$h/.bashrc.d")"
 assert_eq "links starship.toml" "$REPO/starship.toml" "$(readlink -f "$h/.config/starship.toml")"
 assert_eq "links git-prompt.sh" "$REPO/git-prompt.sh" "$(readlink -f "$h/.config/starship-git-prompt.sh")"
+assert_eq "links .inputrc"      "$REPO/.inputrc"      "$(readlink -f "$h/.inputrc")"
 
 # Second run must not churn the links or make a backup of its own symlink.
 HOME="$h" "$REPO/install.sh" >/dev/null 2>&1
@@ -112,6 +113,24 @@ assert_eq "prepend_path survives" "function"           "$(in_shell "$h" 'printf 
 # Synology fragment must be inert on a non-Synology host.
 out=$(bash -c ". '$REPO/.bashrc.d/50-host-synology.sh'; printf %s \"\$PATH\"" 2>&1)
 case "$out" in *"/opt/bin"*) no "synology guard" "leaked /opt/bin";; *) ok "synology guard";; esac
+
+rm -rf "$h"
+
+echo
+echo "== cd and completion =="
+
+h=$(mkhome)
+
+for o in cdspell autocd nocaseglob dirspell; do
+  assert_eq "shopt $o" "shopt -s $o" "$(in_shell "$h" "shopt -p $o")"
+done
+
+# bind -v reports the parsed ~/.inputrc, so it also proves install linked it.
+readline=$(in_shell "$h" 'bind -v')
+for v in completion-ignore-case completion-map-case show-all-if-ambiguous \
+         show-all-if-unmodified colored-stats; do
+  assert_contains "readline $v" "set $v on" "$readline"
+done
 
 rm -rf "$h"
 

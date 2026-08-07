@@ -18,6 +18,7 @@ link() {
 }
 
 link .bashrc       "$HOME/.bashrc"
+link .inputrc      "$HOME/.inputrc"
 link .bashrc.d     "$HOME/.bashrc.d"
 link starship.toml "$HOME/.config/starship.toml"
 link git-prompt.sh "$HOME/.config/starship-git-prompt.sh"
