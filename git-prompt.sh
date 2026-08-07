@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # posh-git style git segment for the starship prompt: "[main ≡ +0 ~2 -0 | +0 ~1 -0]"
-# Index section (green) is printed only when the index is dirty, matching posh-git.
+# Each section is printed only when it has changes, matching posh-git: green index,
+# yellow worktree, separator only when both are present.
 # Emits its own ANSI colour, so the starship custom module must not set a style.
 #
 # The branch is rendered here rather than by starship's git_branch so one module
@@ -64,8 +65,11 @@ out="${BRANCH}${branch}${RESET}"
 
 # A fully clean tree shows no counts at all: "[main ≡]", like posh-git.
 if [ $((ia + im + id + wa + wm + wd + conflicts)) -gt 0 ]; then
-  [ $((ia + im + id)) -gt 0 ] && out="$out ${GREEN}+${ia} ~${im} -${id}${RESET} |"
-  out="$out ${YELLOW}+${wa} ~${wm} -${wd}${RESET}"
+  index="" work=""
+  [ $((ia + im + id)) -gt 0 ] && index=" ${GREEN}+${ia} ~${im} -${id}${RESET}"
+  [ $((wa + wm + wd)) -gt 0 ] && work=" ${YELLOW}+${wa} ~${wm} -${wd}${RESET}"
+  [ -n "$index" ] && [ -n "$work" ] && index="$index |"
+  out="$out$index$work"
   [ "$conflicts" -gt 0 ] && out="$out ${RED}!${conflicts}${RESET}"
 fi
 

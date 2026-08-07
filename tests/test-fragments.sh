@@ -233,7 +233,11 @@ if command -v git >/dev/null; then
   assert_eq "untracked counts as add" "[main ≡ +1 ~0 -0]" "$(poshprompt "$w")"
 
   ( cd "$w" && git add new.txt ) >/dev/null 2>&1
-  assert_eq "staged splits sections" "[main ≡ +1 ~0 -0 | +0 ~0 -0]" "$(poshprompt "$w")"
+  assert_eq "clean worktree drops its section" "[main ≡ +1 ~0 -0]" "$(poshprompt "$w")"
+
+  echo x >> "$w/f.txt"
+  assert_eq "staged splits sections" "[main ≡ +1 ~0 -0 | +0 ~1 -0]" "$(poshprompt "$w")"
+  ( cd "$w" && git checkout -q -- f.txt ) >/dev/null 2>&1
 
   ( cd "$w" && git commit -qm local ) >/dev/null 2>&1
   assert_eq "ahead" "[main ↑1]" "$(poshprompt "$w")"
