@@ -1,13 +1,18 @@
-# Lean starship prompt. ASCII-only — no nerd font required (works on NAS SSH).
+# Lean starship prompt. No nerd font required — the git symbols (≡ ↑ ↓) are
+# plain Unicode, so a UTF-8 locale is enough, including over SSH to the NAS.
 
 add_newline = true
+
+# Default is 500ms, which silently drops custom.git_posh in any repo on /mnt/c
+# where `git status` alone costs ~600ms.
+command_timeout = 2000
 
 format = """
 $username\
 $hostname\
 $directory\
 $git_branch\
-$git_status\
+${custom.git_posh}\
 $cmd_duration\
 $line_break\
 $character"""
@@ -26,19 +31,17 @@ symbol = ""
 format = "on [$branch]($style) "
 style = "bold purple"
 
+# Replaced by custom.git_posh: git_status cannot render zero counts, and
+# posh-git's "+0 ~2 -0" shows them always.
 [git_status]
-format = "([$all_status$ahead_behind]($style) )"
-style = "yellow"
-conflicted = "="
-ahead = ">"
-behind = "<"
-diverged = "<>"
-untracked = "?"
-stashed = "$"
-modified = "!"
-staged = "+"
-renamed = "»"
-deleted = "x"
+disabled = true
+
+[custom.git_posh]
+command = "$HOME/.config/starship-git-prompt.sh"
+when = true
+shell = ["bash", "--noprofile", "--norc"]
+# The script emits its own ANSI colour, so no $style here.
+format = "$output "
 
 [cmd_duration]
 min_time = 2_000

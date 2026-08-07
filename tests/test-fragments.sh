@@ -48,6 +48,7 @@ h=$(mkhome)
 assert_eq "links .bashrc"       "$REPO/.bashrc"       "$(readlink -f "$h/.bashrc")"
 assert_eq "links .bashrc.d"     "$REPO/.bashrc.d"     "$(readlink -f "$h/.bashrc.d")"
 assert_eq "links starship.toml" "$REPO/starship.toml" "$(readlink -f "$h/.config/starship.toml")"
+assert_eq "links git-prompt.sh" "$REPO/git-prompt.sh" "$(readlink -f "$h/.config/starship-git-prompt.sh")"
 
 # Second run must not churn the links or make a backup of its own symlink.
 HOME="$h" "$REPO/install.sh" >/dev/null 2>&1
@@ -176,6 +177,68 @@ assert_eq "fp filters PATH" "/ZZfp/lib" \
   "$(in_shell "$h" 'PATH="$PATH:/ZZfp/lib"; fp zzfp')"
 
 rm -rf "$h"
+
+echo
+echo "== posh-git prompt =="
+
+# Builds a repo with an upstream, runs git-prompt.sh in it, strips colour.
+poshprompt() { ( cd "$1" && "$REPO/git-prompt.sh" 2>/dev/null | sed 's/\x1b\[[0-9;]*m//g' ); }
+
+newrepo() { # -> path to a clone with 'origin' upstream, one commit
+  local base; base=$(mktemp -d)
+  (
+    cd "$base" && mkdir up && cd up
+    git init -q -b main .
+    git config user.email t@t; git config user.name t
+    echo a > f.txt; echo b > g.txt; git add .; git commit -qm init
+    cd "$base" && git clone -q up work
+    cd work && git config user.email t@t; git config user.name t
+  ) >/dev/null 2>&1
+  printf '%s' "$base/work"
+}
+
+if command -v git >/dev/null; then
+  assert_eq "not a repo" "" "$(poshprompt /tmp)"
+
+  w=$(newrepo)
+  assert_eq "clean and in sync"  "≡ +0 ~0 -0" "$(poshprompt "$w")"
+
+  echo x >> "$w/f.txt"; echo x >> "$w/g.txt"
+  assert_eq "two modified"       "≡ +0 ~2 -0" "$(poshprompt "$w")"
+
+  rm "$w/g.txt"
+  assert_eq "one modified one deleted" "≡ +0 ~1 -1" "$(poshprompt "$w")"
+
+  ( cd "$w" && git checkout -q -- . ) >/dev/null 2>&1
+  echo n > "$w/new.txt"
+  assert_eq "untracked counts as add" "≡ +1 ~0 -0" "$(poshprompt "$w")"
+
+  ( cd "$w" && git add new.txt ) >/dev/null 2>&1
+  assert_eq "staged splits sections" "≡ +1 ~0 -0 | +0 ~0 -0" "$(poshprompt "$w")"
+
+  ( cd "$w" && git commit -qm local ) >/dev/null 2>&1
+  assert_eq "ahead" "↑1 +0 ~0 -0" "$(poshprompt "$w")"
+
+  ( cd "$w" && git branch -q --unset-upstream ) >/dev/null 2>&1
+  assert_eq "no upstream" "+0 ~0 -0" "$(poshprompt "$w")"
+
+  rm -rf "$(dirname "$w")"
+
+  # End-to-end through starship: the script passing on its own says nothing
+  # about the module being wired into the prompt correctly.
+  if command -v starship >/dev/null; then
+    w=$(newrepo)
+    echo x >> "$w/f.txt"
+    out=$(cd "$w" && STARSHIP_CONFIG="$REPO/starship.toml" \
+          starship module custom.git_posh 2>/dev/null | sed 's/\x1b\[[0-9;]*m//g')
+    assert_contains "starship renders git_posh" "+0 ~1 -0" "$out"
+    rm -rf "$(dirname "$w")"
+  else
+    skip "starship renders git_posh" "starship missing"
+  fi
+else
+  skip "posh-git prompt" "git missing"
+fi
 
 echo
 printf 'pass %d  fail %d  skip %d\n' "$pass" "$fail" "$skipped"
