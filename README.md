@@ -41,7 +41,7 @@ Layout
 | `.bashrc.d/60-dev.sh`           | bun, nvm, `NUGET_PACKAGES`, .NET telemetry opt-out.                               |
 | `.bashrc.d/99-local.sh`         | Optional, gitignored. Per-host secrets/overrides.                                 |
 | `starship.toml`                 | Prompt config. No nerd font required. Git segment comes from `git-prompt.sh`.     |
-| `git-prompt.sh`                 | posh-git style status. One `git status` call; emits its own colour.               |
+| `git-prompt.sh`                 | posh-git branch + status. One `git status` call; emits its own colour.            |
 | `tests/test-fragments.sh`       | Whole suite. Plain bash, no framework.                                            |
 
 Install starship

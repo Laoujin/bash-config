@@ -11,7 +11,6 @@ format = """
 $username\
 $hostname\
 $directory\
-$git_branch\
 ${custom.git_posh}\
 $cmd_duration\
 $line_break\
@@ -22,14 +21,13 @@ success_symbol = "[\\$](bold green)"
 error_symbol = "[\\$](bold red)"
 
 [directory]
-truncation_length = 4
-truncate_to_repo = true
+truncation_length = 0
+truncate_to_repo = false
 style = "bold blue"
 
+# The branch is rendered by git-prompt.sh so a single module owns both brackets.
 [git_branch]
-symbol = ""
-format = "on [$branch]($style) "
-style = "bold purple"
+disabled = true
 
 # Replaced by custom.git_posh: git_status cannot render zero counts, and
 # posh-git's "+0 ~2 -0" shows them always.
@@ -41,7 +39,8 @@ command = "$HOME/.config/starship-git-prompt.sh"
 when = true
 shell = ["bash", "--noprofile", "--norc"]
 # The script emits its own ANSI colour, so no $style here.
-format = "$output "
+# Parenthesised so the trailing space disappears outside a git repo.
+format = "($output )"
 
 [cmd_duration]
 min_time = 2_000

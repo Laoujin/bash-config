@@ -201,26 +201,31 @@ if command -v git >/dev/null; then
   assert_eq "not a repo" "" "$(poshprompt /tmp)"
 
   w=$(newrepo)
-  assert_eq "clean and in sync"  "≡ +0 ~0 -0" "$(poshprompt "$w")"
+  assert_eq "clean and in sync"  "[main ≡ +0 ~0 -0]" "$(poshprompt "$w")"
 
   echo x >> "$w/f.txt"; echo x >> "$w/g.txt"
-  assert_eq "two modified"       "≡ +0 ~2 -0" "$(poshprompt "$w")"
+  assert_eq "two modified"       "[main ≡ +0 ~2 -0]" "$(poshprompt "$w")"
 
   rm "$w/g.txt"
-  assert_eq "one modified one deleted" "≡ +0 ~1 -1" "$(poshprompt "$w")"
+  assert_eq "one modified one deleted" "[main ≡ +0 ~1 -1]" "$(poshprompt "$w")"
 
   ( cd "$w" && git checkout -q -- . ) >/dev/null 2>&1
   echo n > "$w/new.txt"
-  assert_eq "untracked counts as add" "≡ +1 ~0 -0" "$(poshprompt "$w")"
+  assert_eq "untracked counts as add" "[main ≡ +1 ~0 -0]" "$(poshprompt "$w")"
 
   ( cd "$w" && git add new.txt ) >/dev/null 2>&1
-  assert_eq "staged splits sections" "≡ +1 ~0 -0 | +0 ~0 -0" "$(poshprompt "$w")"
+  assert_eq "staged splits sections" "[main ≡ +1 ~0 -0 | +0 ~0 -0]" "$(poshprompt "$w")"
 
   ( cd "$w" && git commit -qm local ) >/dev/null 2>&1
-  assert_eq "ahead" "↑1 +0 ~0 -0" "$(poshprompt "$w")"
+  assert_eq "ahead" "[main ↑1 +0 ~0 -0]" "$(poshprompt "$w")"
 
   ( cd "$w" && git branch -q --unset-upstream ) >/dev/null 2>&1
-  assert_eq "no upstream" "+0 ~0 -0" "$(poshprompt "$w")"
+  assert_eq "no upstream" "[main +0 ~0 -0]" "$(poshprompt "$w")"
+
+  # Detached HEAD has no branch name in the porcelain header.
+  ( cd "$w" && git checkout -q --detach HEAD ) >/dev/null 2>&1
+  sha=$( cd "$w" && git rev-parse --short HEAD )
+  assert_eq "detached HEAD" "[($sha) +0 ~0 -0]" "$(poshprompt "$w")"
 
   rm -rf "$(dirname "$w")"
 
@@ -231,7 +236,21 @@ if command -v git >/dev/null; then
     echo x >> "$w/f.txt"
     out=$(cd "$w" && STARSHIP_CONFIG="$REPO/starship.toml" \
           starship module custom.git_posh 2>/dev/null | sed 's/\x1b\[[0-9;]*m//g')
-    assert_contains "starship renders git_posh" "+0 ~1 -0" "$out"
+    assert_contains "starship renders git_posh" "[main ≡ +0 ~1 -0]" "$out"
+
+    # Full path, not truncated to the repo root.
+    deep="$w/a/b/c"; mkdir -p "$deep"
+    dir=$(cd "$deep" && STARSHIP_CONFIG="$REPO/starship.toml" \
+          starship module directory 2>/dev/null | sed 's/\x1b\[[0-9;]*m//g')
+    assert_contains "directory shows full path" "$deep" "$dir"
+
+    # Outside a repo the module must contribute nothing, not a stray space.
+    nogit=$(mktemp -d)
+    assert_eq "no git segment outside repo" "" \
+      "$(cd "$nogit" && STARSHIP_CONFIG="$REPO/starship.toml" \
+         starship module custom.git_posh 2>/dev/null | sed 's/\x1b\[[0-9;]*m//g')"
+    rm -rf "$nogit"
+
     rm -rf "$(dirname "$w")"
   else
     skip "starship renders git_posh" "starship missing"
