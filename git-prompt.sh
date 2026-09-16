@@ -9,12 +9,16 @@
 #
 # One `git status -b` call, not status + rev-parse + rev-list: on /mnt/c every
 # git invocation costs 50-190ms, so the extra round trips were most of the prompt.
+#
+# --ignore-submodules=dirty, not "all": a staged or unstaged submodule commit is a
+# change to this repo and is counted, while scanning each submodule's work tree for
+# dirt is not, since that costs ~150ms per submodule on /mnt/c.
 set -u
 
 status=$(git --no-optional-locks status --porcelain=v1 -unormal -b \
-           --ignore-submodules=all 2>/dev/null) || exit 0
+           --ignore-submodules=dirty 2>/dev/null) || exit 0
 
-GREEN=$'\033[32m'; YELLOW=$'\033[33m'; RED=$'\033[31m'; RESET=$'\033[0m'
+GREEN=$'\033[32m'; YELLOW=$'\033[38;5;226m'; RED=$'\033[31m'; RESET=$'\033[0m'
 BRANCH=$'\033[1;35m'
 
 ia=0 im=0 id=0   # index: added, modified, deleted
@@ -52,12 +56,11 @@ while IFS= read -r line; do
 
   x=${line:0:1}; y=${line:1:1}
 
-  if [ "$x$y" = "??" ]; then wa=$((wa + 1)); continue; fi
   # Any U, or AA/DD, is an unmerged path.
   case "$x$y" in U?|?U|AA|DD) conflicts=$((conflicts + 1)); continue;; esac
 
   case "$x" in A) ia=$((ia + 1));; M|R|C) im=$((im + 1));; D) id=$((id + 1));; esac
-  case "$y" in M) wm=$((wm + 1));; D) wd=$((wd + 1));; esac
+  case "$y" in A|\?) wa=$((wa + 1));; M) wm=$((wm + 1));; D) wd=$((wd + 1));; esac
 done <<< "$status"
 
 out="${BRANCH}${branch}${RESET}"

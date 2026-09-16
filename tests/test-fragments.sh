@@ -216,6 +216,23 @@ newrepo() { # -> path to a clone with 'origin' upstream, one commit
   printf '%s' "$base/work"
 }
 
+newsubrepo() { # -> path to a repo, in sync with origin, containing submodule 'sub'
+  local base; base=$(mktemp -d)
+  (
+    cd "$base"
+    git init -q -b main sub && cd sub
+    git config user.email t@t; git config user.name t
+    echo a > a.txt; git add .; git commit -qm init
+    cd "$base" && git init -q --bare up && git init -q -b main work && cd work
+    git config user.email t@t; git config user.name t
+    echo a > f.txt; git add .; git commit -qm init
+    git -c protocol.file.allow=always submodule add -q "$base/sub" sub
+    git commit -qm add-sub
+    git remote add origin ../up && git push -q -u origin main
+  ) >/dev/null 2>&1
+  printf '%s' "$base/work"
+}
+
 if command -v git >/dev/null; then
   assert_eq "not a repo" "" "$(poshprompt /tmp)"
 
@@ -249,6 +266,25 @@ if command -v git >/dev/null; then
   ( cd "$w" && git checkout -q --detach HEAD ) >/dev/null 2>&1
   sha=$( cd "$w" && git rev-parse --short HEAD )
   assert_eq "detached HEAD" "[($sha)]" "$(poshprompt "$w")"
+
+  rm -rf "$(dirname "$w")"
+
+
+  # Submodule work trees are not scanned, so their dirt is invisible, but the
+  # gitlink -- the commit this repo records for them -- still counts.
+  w=$(newsubrepo)
+  assert_eq "submodule clean" "[main ≡]" "$(poshprompt "$w")"
+
+  touch "$w/sub/untracked.txt"; echo x >> "$w/sub/a.txt"
+  assert_eq "dirty submodule work tree ignored" "[main ≡]" "$(poshprompt "$w")"
+
+  ( cd "$w/sub" && git checkout -q -- . && rm untracked.txt \
+      && git -c user.email=t@t -c user.name=t commit -q --allow-empty -m c2 ) >/dev/null 2>&1
+  assert_eq "unstaged submodule commit counts as modify" "[main ≡ +0 ~1 -0]" "$(poshprompt "$w")"
+
+  ( cd "$w" && git add sub ) >/dev/null 2>&1
+  touch "$w/sub/untracked.txt"
+  assert_eq "staged submodule commit counts once" "[main ≡ +0 ~1 -0]" "$(poshprompt "$w")"
 
   rm -rf "$(dirname "$w")"
 
