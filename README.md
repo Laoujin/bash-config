@@ -36,6 +36,7 @@ Layout
 | `.bashrc.d/16-git.sh`           | git typo aliases; `pr` pushes and opens a PR.                                                       |
 | `.bashrc.d/17-fs.sh`            | `mkd`, `fp`, `cwd`.                                                                                 |
 | `.bashrc.d/20-colors.sh`        | `dircolors`, colored `ls`/`grep`, `lesspipe`.                                                       |
+| `.bashrc.d/25-keybindings.sh`   | Alt+W banks the current line in history and clears it (PSReadLine style).                           |
 | `.bashrc.d/30-completion.sh`    | `bash-completion` if available.                                                                     |
 | `.bashrc.d/40-starship.sh`      | `eval $(starship init bash)`, skipped if starship isn't installed.                                  |
 | `.bashrc.d/50-host-wsl.sh`      | WSL-only: `BROWSER=wslview`, `NODE_OPTIONS`. Self-detects via `/proc/version`.                      |

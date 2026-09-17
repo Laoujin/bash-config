@@ -142,6 +142,25 @@ assert_contains "readline keyseq-timeout" "set keyseq-timeout 150" "$readline"
 rm -rf "$h"
 
 echo
+echo "== keybindings =="
+
+h=$(mkhome)
+
+assert_contains "alt-w bound" '"\ew": "__push_line"' "$(in_shell "$h" 'bind -X')"
+
+out=$(in_shell "$h" 'READLINE_LINE="echo pushed"; READLINE_POINT=11; __push_line
+                     printf "line=[%s] point=[%s]" "$READLINE_LINE" "$READLINE_POINT"')
+assert_eq "alt-w clears the line" "line=[] point=[0]" "$out"
+
+out=$(in_shell "$h" 'READLINE_LINE="echo pushed"; __push_line; history 1')
+assert_contains "alt-w banks in history" "echo pushed" "$out"
+
+out=$(in_shell "$h" 'READLINE_LINE=; __push_line; printf "hist=[%s]" "$(history 1)"')
+assert_contains "empty line not banked" "hist=[]" "$out"
+
+rm -rf "$h"
+
+echo
 echo "== cd aliases =="
 
 h=$(mkhome)
