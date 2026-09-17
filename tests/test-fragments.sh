@@ -132,6 +132,13 @@ for v in completion-ignore-case completion-map-case show-all-if-ambiguous \
   assert_contains "readline $v" "set $v on" "$readline"
 done
 
+# bind -p writes Meta form when stdout is not a tty; bare Esc shows as \M-\000.
+binds=$(in_shell "$h" 'bind -p')
+assert_contains "esc clears line"   '"\M-\000": kill-whole-line'        "$binds"
+assert_contains "up still history"  '"\M-[A": history-search-backward'  "$binds"
+assert_contains "meta-dot survives" '"\M-.": yank-last-arg'             "$binds"
+assert_contains "readline keyseq-timeout" "set keyseq-timeout 150" "$readline"
+
 rm -rf "$h"
 
 echo

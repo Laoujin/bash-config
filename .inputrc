@@ -16,3 +16,9 @@ set completion-query-items 200
 "\e[B": history-search-forward
 "\eOA": history-search-backward
 "\eOB": history-search-forward
+
+# PSReadLine-style Esc: clear the line (Ctrl-Y brings it back). Esc is also the
+# prefix of every arrow/Meta sequence, so readline falls back to this binding
+# only after keyseq-timeout passes with no follow-up byte.
+set keyseq-timeout 150
+"\e": kill-whole-line
