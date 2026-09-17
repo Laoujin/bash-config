@@ -1,0 +1,6 @@
+# Design/assets management wants a ~/Dropbox/Design tree and drops a
+# design_assets symlink farm into every project. Turning it off also drops the
+# repo index (`c`), which 15-cd-aliases.sh already covers by hand.
+export SCM_BREEZE_DISABLE_ASSETS_MANAGEMENT=true
+
+# vi: ft=sh

@@ -22,5 +22,8 @@ link .inputrc      "$HOME/.inputrc"
 link .bashrc.d     "$HOME/.bashrc.d"
 link starship.toml "$HOME/.config/starship.toml"
 link git-prompt.sh "$HOME/.config/starship-git-prompt.sh"
+link .scmbrc       "$HOME/.scmbrc"
+link .git.scmbrc   "$HOME/.git.scmbrc"
 
 command -v starship >/dev/null || echo "warn  starship not installed - see README"
+[ -d "$HOME/.scm_breeze" ]   || echo "warn  scm_breeze not cloned - see README"

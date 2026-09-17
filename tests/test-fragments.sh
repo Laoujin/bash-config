@@ -50,6 +50,8 @@ assert_eq "links .bashrc.d"     "$REPO/.bashrc.d"     "$(readlink -f "$h/.bashrc
 assert_eq "links starship.toml" "$REPO/starship.toml" "$(readlink -f "$h/.config/starship.toml")"
 assert_eq "links git-prompt.sh" "$REPO/git-prompt.sh" "$(readlink -f "$h/.config/starship-git-prompt.sh")"
 assert_eq "links .inputrc"      "$REPO/.inputrc"      "$(readlink -f "$h/.inputrc")"
+assert_eq "links .scmbrc"       "$REPO/.scmbrc"       "$(readlink -f "$h/.scmbrc")"
+assert_eq "links .git.scmbrc"   "$REPO/.git.scmbrc"   "$(readlink -f "$h/.git.scmbrc")"
 
 # Second run must not churn the links or make a backup of its own symlink.
 HOME="$h" "$REPO/install.sh" >/dev/null 2>&1
@@ -222,6 +224,72 @@ assert_eq "fp filters PATH" "/ZZfp/lib" \
   "$(in_shell "$h" 'PATH="$PATH:/ZZfp/lib"; fp zzfp')"
 
 rm -rf "$h"
+
+echo
+echo "== scm_breeze =="
+
+# scm_breeze is cloned, not symlinked, so the throwaway HOME needs it borrowed.
+if [ -d "$REAL_HOME/.scm_breeze" ]; then
+  h=$(mkhome)
+  ln -s "$REAL_HOME/.scm_breeze" "$h/.scm_breeze"
+
+  assert_contains "gs numbers status"  "git_status_shortcuts" "$(in_shell "$h" 'alias gs')"
+  assert_contains "ga adds by index"   "git_add_shortcuts"    "$(in_shell "$h" 'alias ga')"
+
+  # The three names scm_breeze would otherwise take from us.
+  assert_contains "gt stays git"       "'git'"                "$(in_shell "$h" 'alias gt')"
+  assert_contains "code stays cd"      "cd "                  "$(in_shell "$h" 'alias code')"
+  assert_contains "ls stays coloured"  "--color=auto"         "$(in_shell "$h" 'alias ls')"
+
+  # Assets management off: no design_assets symlink farm, no repo index.
+  assert_eq "no repo index" "" "$(in_shell "$h" 'type -t git_index')"
+
+  # Assets management off silently leaves aliases pointing at functions that
+  # never load, so check every alias resolves rather than just that one.
+  dangling=$(in_shell "$h" 'while read -r a; do
+      a=${a#alias }; t=${a#*=}; t=${t%\'"'"'}; t=${t#\'"'"'}
+      set -- $t; [ -n "${1:-}" ] || continue
+      type "$1" >/dev/null 2>&1 || echo "${a%%=*} -> $1"
+    done < <(alias -p)')
+  assert_eq "no dangling aliases" "" "$dangling"
+
+  # End to end: numbered status, then stage file 1 by its number.
+  if command -v git >/dev/null; then
+    w=$(mktemp -d)
+    ( cd "$w" && git init -q -b main . && git config user.email t@t && git config user.name t \
+        && echo a > one.txt && echo b > two.txt ) >/dev/null 2>&1
+    out=$(in_shell "$h" "cd '$w' && gs")
+    assert_contains "gs numbers untracked" "1" "$out"
+    assert_contains "gs lists the file"    "one.txt" "$out"
+
+    staged=$(in_shell "$h" "cd '$w' && gs >/dev/null && ga 1 >/dev/null && git diff --cached --name-only")
+    assert_eq "ga 1 stages file 1" "one.txt" "$staged"
+
+    # The file shortcut variables are the reason to prefer scm_breeze over aliases.
+    assert_eq "\$e2 names file 2" "two.txt" \
+      "$(in_shell "$h" "cd '$w' && gs >/dev/null && printf %s \"\$(basename \"\$e2\")\"")"
+
+    # Index expansion has to reach the plain `git x` aliases too, not just ga.
+    assert_contains "gd 1 diffs file 1" "one.txt" \
+      "$(in_shell "$h" "cd '$w' && git add -A >/dev/null && git commit -qm init >/dev/null \
+                        && echo changed > one.txt && gs >/dev/null && gd --name-only 1")"
+
+    rm -rf "$w"
+  else
+    skip "gs/ga end to end" "git missing"
+  fi
+
+  # Ruby is what keeps gs off the slow shell fallback.
+  if command -v ruby >/dev/null; then
+    ok "ruby present (fast git_status_shortcuts)"
+  else
+    skip "ruby present (fast git_status_shortcuts)" "ruby missing"
+  fi
+
+  rm -rf "$h"
+else
+  skip "scm_breeze" "~/.scm_breeze not cloned"
+fi
 
 echo
 echo "== posh-git prompt =="

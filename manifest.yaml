@@ -16,3 +16,11 @@ links:
     target:
       linux: "$HOME/.config/starship.toml"
       macos: "$HOME/.config/starship.toml"
+  - source: .scmbrc
+    target:
+      linux: "$HOME/.scmbrc"
+      macos: "$HOME/.scmbrc"
+  - source: .git.scmbrc
+    target:
+      linux: "$HOME/.git.scmbrc"
+      macos: "$HOME/.git.scmbrc"
