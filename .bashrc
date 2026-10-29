@@ -4,6 +4,10 @@
 # Above the interactive guard on purpose: non-interactive shells run bun install too.
 command -v gh >/dev/null && export GITHUB_TOKEN=$(gh auth token 2>/dev/null)
 
+# MSBuild node reuse leaves idle worker processes behind after every build
+export MSBUILDDISABLENODEREUSE=1
+export DOTNET_CLI_USE_MSBUILD_SERVER=0
+
 # Sourced by interactive bash shells. Bail on non-interactive.
 case $- in *i*) ;; *) return;; esac
 
